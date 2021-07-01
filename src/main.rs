@@ -1,15 +1,19 @@
 use clap::{app_from_crate, Arg};
+use scopeguard::guard;
+use tokio::io::AsyncReadExt;
+use tokio_tun::result::Result;
 use tokio_tun::TunBuilder;
-use tracing::{info, span, Level};
-use tracing_bunyan_formatter::BunyanFormattingLayer;
-use tracing_bunyan_formatter::JsonStorageLayer;
+use tracing::span;
+use tracing::trace;
+use tracing::Level;
+use tracing_bunyan_formatter::{BunyanFormattingLayer, JsonStorageLayer};
 use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::Registry;
 
 const OPTION_DEVICE_NAME: &str = "dev";
 
 #[tokio::main]
-async fn main() -> Result<(), ()> {
+async fn main() -> Result<()> {
     // Setup logger
     let formatting_layer = BunyanFormattingLayer::new("werson".into(), std::io::stdout);
     let subscriber = Registry::default()
@@ -28,30 +32,34 @@ async fn main() -> Result<(), ()> {
         .get_matches();
 
     // Create TAP device
-    let tap_device;
-    let span = span!(Level::INFO, "TAP device creation");
+    let device_name = matches.value_of(OPTION_DEVICE_NAME).unwrap();
+    let span = span!(
+        Level::INFO,
+        "TAP device creation",
+        device_name = device_name
+    );
     let enter = span.enter();
 
-    info!(
-        "Creating TAP device with name `{}`",
-        matches.value_of(OPTION_DEVICE_NAME).unwrap()
-    );
-
-    tap_device = TunBuilder::new()
-        .name(matches.value_of(OPTION_DEVICE_NAME).unwrap())
+    let tap_device = TunBuilder::new()
+        .name(device_name)
         .tap(true)
         .packet_info(false)
         .up()
-        .try_build();
+        .try_build()?;
 
     drop(enter);
 
-    loop {}
+    // Start reading from TAP device
+    let span = span!(Level::INFO, "TAP device read loop");
+    let enter = span.enter();
+    guard((), |_| drop(enter));
 
-    // let span = span!(Level::INFO, "TAP device read loop");
-    // let enter = span.enter();
+    let (mut reader, mut _writer) = tokio::io::split(tap_device);
 
-    // let reader = tap_device.reader();
+    let mut buf = [0u8; 1024];
+    loop {
+        let n = reader.read(&mut buf).await?;
 
-    // drop(enter);
+        trace!("Read {} bytes: {:?}", n, &buf[..n]);
+    }
 }
