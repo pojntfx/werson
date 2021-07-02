@@ -15,7 +15,7 @@ const OPTION_DEVICE_NAME: &str = "dev";
 #[tokio::main]
 async fn main() -> Result<()> {
     // Setup logger
-    let formatting_layer = BunyanFormattingLayer::new("werson".into(), std::io::stdout);
+    let formatting_layer = BunyanFormattingLayer::new("werson-join".into(), std::io::stdout);
     let subscriber = Registry::default()
         .with(JsonStorageLayer)
         .with(formatting_layer);
