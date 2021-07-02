@@ -16,3 +16,14 @@ tracing = "0.1.26"
 tracing-bunyan-formatter = "0.2.4"
 tracing-subscriber = "0.2.19"
 scopeguard = "1.1.0"
+actix = "0.10.0"
+actix-web = "3"
+actix-web-actors = "3"
+
+[[bin]]
+name="werson-join"
+path="src/join.rs"
+
+[[bin]]
+name="werson-signal"
+path="src/signal.rs"
