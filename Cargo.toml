@@ -19,6 +19,8 @@ scopeguard = "1.1.0"
 actix = "0.10.0"
 actix-web = "3"
 actix-web-actors = "3"
+awc = "2.0.3"
+futures-util = "0.3.15"
 
 [[bin]]
 name="werson-join"
@@ -27,3 +29,7 @@ path="src/join.rs"
 [[bin]]
 name="werson-signal"
 path="src/signal.rs"
+
+[[bin]]
+name="werson-signal-client"
+path="src/signal-client.rs"
